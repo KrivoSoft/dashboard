@@ -11,7 +11,7 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 Заранее определим некоторые переменные
 '''
 #  Файл с данными по тональности
-file_with_data = "excel_file.xlsx"
+file_with_data = "excel_file_temp.xlsx"
 
 #  Файл с информацией по обращениям (Номер обращения, исполнитель, инициатор, email)
 all_application_file = "all_application.xlsx"
@@ -177,8 +177,12 @@ class Statement_Data():
         ''' 
         Получаем сводные таблицы
         '''
-        
-        self.dataframe = self.get_data_from_file(self.file_with_data) #  Подгрузим данные
+        try:
+            self.dataframe = self.get_data_from_file(self.file_with_data) #  Подгрузим данные
+        except(FileNotFoundError):
+            print("Не могу найти файл: " + file_with_data)
+            exit(1)
+            
         self.dataframe = self.clear_data(self.dataframe)
         
         #  Получаем последние 10 обращений с неудовлетворённой 
