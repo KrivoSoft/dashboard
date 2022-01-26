@@ -7,46 +7,82 @@ import matplotlib.pyplot as plt
 from openpyxl import load_workbook
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
-'''
+"""
 Заранее определим некоторые переменные
-'''
+"""
 #  Файл с данными по тональности
 file_with_data = "excel_file_temp.xlsx"
 
-#  Файл с информацией по обращениям (Номер обращения, исполнитель, инициатор, email)
+#  Файл с информацией по обращениям 
+#  (номер обращения, исполнитель, инициатор, email)
 all_application_file = "all_application.xlsx"
     
     
 class App(tk.Tk):
-    '''
+    """
     Класс графического приложения
-    '''
+    """
     
-    def __init__(self, data):  #numbers, labels, bad_app_list, file_with_data):
+    def __init__(self, data):
         super().__init__()
         
         self.title('Radar')
         
-        #  Круговая диаграмма
-        figure1 = plt.Figure(figsize=(6, 3), dpi=100)
-        ax1 = figure1.add_subplot()
-        inedible_pie = FigureCanvasTkAgg(figure1, self)
-        inedible_pie.get_tk_widget().grid(row=1, column=0, padx=5, pady=5)
-        data.summary_requester.plot(kind='pie', legend=False, ax=ax1, subplots=True, startangle=90, autopct='%1.1f%%', ylabel='')
-        ax1.set_title("Тональность заявителя")
         
-        #  Столбчатая диаграмма
-        figure2 = plt.Figure(figsize=(5, 3))
-        ax2 = figure2.add_subplot()
-        bar = FigureCanvasTkAgg(figure2, self)
-        bar.get_tk_widget().grid(row=1, column=1, padx=5, pady=5)
-        data.summary_performer.plot(kind='bar', ax=ax2, subplots=False, rot=0, color=['#5cb85c', '#d9534f'], width=0.08)
-        ax2.set_title("Тональность исполнителя")
-        ax2.legend(fancybox=True, framealpha=0.4, shadow=True, borderpad=1)
+        """
+        Круговая диаграмма
+        """
         
+        #  Создание объекта типа figure
+        #  figure - контейнер самого верхнего уровня 
+        fig_1 = plt.Figure(figsize=(3, 3))
+        
+        #  Создание сетки для построения диаграммы 1х1 для 1 графика.
+        #  axes - область, где отображается диаграмма
+        ax_1 = fig_1.add_subplot(111)  
+        
+        #  Объект FigureCanvasTkAgg объединяет объект figure и 
+        #  графическое окно Tkinter (объект Canvas в Tkinter)
+        canvas_pie = FigureCanvasTkAgg(fig_1, self)
+        
+        #  Размещение элемента в графическом окне через метод place()
+        #  place() - абсолютное позиционирование
+        canvas_pie.get_tk_widget().place(x=20, y=20)
+        
+        #  Создаём круговую диаграмму в области axes
+        ax_1.pie(data.summary_requester["Количество"], startangle=90, 
+            autopct='%1.1f%%')
+        ax_1.set_title("Тональность заявителя")
+        
+        #canvas_pie.mpl_connect('button_press_event', self.onclick)
+        
+        
+        """
+          Столбчатая диаграмма
+        """
+        
+        #  Cоздание фигуры
+        fig_2 = plt.Figure(figsize=(3, 3.3))
+        
+        #  Создание Axes
+        ax_2 = fig_2.add_subplot(111)
+        
+        #  Объединяем фигуру и окно программы
+        bar_canvas = FigureCanvasTkAgg(fig_2, self)
+        
+        #  Задаём позицию элемента
+        bar_canvas.get_tk_widget().place(x=350, y=0)
+         
+        data.summary_performer.plot(kind='bar', ax=ax_2, subplots=False, rot=0, color=['#5cb85c', '#d9534f'], width=0.08)
+        ax_2.set_title("Тональность исполнителя")
+        #ax_2.legend(fancybox=True, framealpha=0.4, shadow=True, borderpad=1)
+        
+        """
+        Список обращений с неудовлетворительной тональностью
+        """
         #  Элемент ListBox
         bad_app_frame = tk.LabelFrame(self, text='Неудовл. исполнителя')
-        bad_app_frame.grid(column=2, row=1, padx=5, pady=5)
+        bad_app_frame.place(x=800, y=20)
         sd_listbox = tk.Listbox(bad_app_frame, height=10)
         sd_listbox.grid(row=1, column=2)
         
@@ -77,9 +113,9 @@ class App(tk.Tk):
         for row in all_bad_app:
             tree.insert('', 'end', text="1", values=(row[0], row[1], row[2], row[3]))
 
-        tree.grid(row=2, column=0, padx=5, pady=5, columnspan = 2)
+        tree.place(x=20, y=400)
         
-        self.refresh(figure1, figure2, ax1, ax2, inedible_pie, bar, sd_listbox, tree, data)
+        self.refresh(fig_1, fig_2, ax_1, ax_2, canvas_pie, bar_canvas, sd_listbox, tree, data)
         
         
     def refresh(self, figure1, figure2, ax1, ax2, inedible_pie, bar, sd_listbox, tree, data):
@@ -139,6 +175,12 @@ class App(tk.Tk):
         
         self.update()
         self.after(5000, self.refresh, figure1, figure2, ax1, ax2, inedible_pie, bar, sd_listbox, tree, data)
+        
+    def onclick(event, x):
+        a = event.artist
+        print('on pick:', a, a.get_gid())
+        a.set_facecolor(click_color)
+        plt.draw()
 
 
 class Statement_Data():
@@ -284,7 +326,9 @@ if __name__ == "__main__":
     my_data = Statement_Data(file_with_data)
     
     app = App(my_data)
-    app.geometry("700x400")
+    
+    #  Задаём размер окна. Сначала ширина, затем высота.
+    app.geometry("1000x600")
     app.configure(background='white')
     app.mainloop()
     print("Завершение работы")
