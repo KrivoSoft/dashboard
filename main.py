@@ -54,7 +54,7 @@ class App(tk.Tk):
         
         #  Данный участок кода будет работать при повторном обновлении данных
         if self.fig_1 is not None:
-			#  Очистка всех графических элементов от старых значений
+            #  Очистка всех графических элементов от старых значений
             self.fig_1.clf()
             self.fig_2.clf()
             sd_listbox = self.sd_listbox
@@ -142,29 +142,6 @@ class App(tk.Tk):
         self.bad_app_frame = bad_app_frame
         self.sd_listbox = sd_listbox
         
-        ###########
-        # Таблица #
-        ###########
-        tree = ttk.Treeview(self, column=("Номер обращения", "Исполнитель", "Инициатор", "Email"), show='headings', height=10)
-        tree.delete(*tree.get_children())
-        tree.column("# 1")
-        tree.heading("# 1", text="Номер обращения")
-        tree.column("# 2")
-        tree.heading("# 2", text="Исполнитель")
-        tree.column("# 3")
-        tree.heading("# 3", text="Инициатор")
-        tree.column("# 4")
-        tree.heading("# 4", text="Email")
-
-        # Вставка данных в таблицу
-        all_bad_app = data.info_bad_app
-        
-        for row in all_bad_app:
-            tree.insert('', 'end', text="1", values=(row[0], row[1], row[2], row[3]))
-
-        tree.place(x=20, y=400)
-        self.tree = tree
-        
         #  Запоминаем дату изменения файла
         data.last_modified_time = time.ctime(os.path.getmtime(data.file_with_data))
         
@@ -177,7 +154,7 @@ class App(tk.Tk):
         """
         
         try:
-			#  Запоминаем время редактирования файла с данными
+            #  Запоминаем время редактирования файла с данными
             modified_time = time.ctime(os.path.getmtime(data.file_with_data))
             
             #  Если она изменилась, то обновлением данные
@@ -198,7 +175,9 @@ class App(tk.Tk):
         self.after(5000, self.refresh, data)
         
     def onclick(self, event):
-        #  Действия при нажатии мышкой на фрагмент диаграммы
+        """
+        Действия при нажатии мышкой на фрагмент диаграммы
+        """
         for p in self.patches_pie:
             p.set_facecolor(p.get_gid())
         a = event.artist
@@ -214,22 +193,43 @@ class App(tk.Tk):
         """
         
         def close_window ():
-			"""
-			Метод закрытия окна с таблицей
-			"""
+            """
+            Метод закрытия окна с таблицей
+            """
             window.destroy()
             
         window = tk.Toplevel(self)
         frame = tk.Frame(window)
-        frame.pack()
-        button = tk.Button(frame, text = "Закрыть", command = close_window)
-        button.pack()
         
+        tree = ttk.Treeview(window, column=("Номер обращения", "Исполнитель", "Инициатор", "Email"), show='headings', height=10)
+        tree.delete(*tree.get_children())
+        tree.column("# 1")
+        tree.heading("# 1", text="Номер обращения")
+        tree.column("# 2")
+        tree.heading("# 2", text="Исполнитель")
+        tree.column("# 3")
+        tree.heading("# 3", text="Инициатор")
+        tree.column("# 4")
+        tree.heading("# 4", text="Email")
+
+        # ~ # Вставка данных в таблицу
+        # ~ all_bad_app = data.info_bad_app
+        
+        # ~ for row in all_bad_app:
+            # ~ tree.insert('', 'end', text="1", values=(row[0], row[1], row[2], row[3]))
+        
+        #  Добавление кнопки выхода
+        button = tk.Button(frame, text = "Закрыть", command = close_window)
+        
+        tree.pack()
+        frame.pack()
+        button.pack()
+                
 
 class Statement_Data():
-    '''
+    """
     Класс для датафрейма и оперирования над данными
-    '''
+    """
     
     file_with_data = ""        #  Имя файла с данными
     last_modified_time = None  #  Дата изменения файла с данными
@@ -259,9 +259,9 @@ class Statement_Data():
     
     
     def get_summary_info(self):
-        ''' 
+        """ 
         Получаем сводные таблицы
-        '''
+        """
         try:
             self.dataframe = self.get_data_from_file(self.file_with_data) #  Подгрузим данные
         except(FileNotFoundError):
@@ -292,9 +292,9 @@ class Statement_Data():
         
         
     def get_data_from_file(self, name_of_file):
-        '''
+        """
         Функция чтения данных из Excel-файла
-        '''
+        """
         
         #  Установим счётчик времени
         start_time = time.time()
@@ -314,9 +314,9 @@ class Statement_Data():
         
         
     def clear_data(self, data):
-        ''' 
+        """ 
         Функция предварительной очистки данных
-        '''
+        """
         
         # На случай, если понадобится удалить лишние столбцы
         #data.drop(['Решение', 'Комментарий заявителя'], axis=1, inplace=True)
@@ -332,10 +332,10 @@ class Statement_Data():
         
 
     def convert_data_for_diagrams(self, summary_table):
-        ''' 
+        """ 
         Функция для преобразования данных сводной таблицы
         в данные для построения графиков
-        '''
+        """
         
         #  Получаем названия полей
         labels = []
