@@ -48,7 +48,9 @@ class App(tk.Tk):
     
     def __init__(self, data):
         super().__init__()
+        self.update_window(data)
         
+    def update_window(self, data):
         self.title('Radar')
         ########################
         #  Круговая диаграмма  #
@@ -238,7 +240,17 @@ class App(tk.Tk):
         a.set_facecolor(click_color)
         print("Сработало событие выделения фрагмента пирога")
         self.fig_1.canvas.draw()
-
+        self.show_table()
+        
+    def show_table(self):
+        def close_window (): 
+            window.destroy()
+        window = tk.Toplevel(self)
+        frame = tk.Frame(window)
+        frame.pack()
+        button = tk.Button(frame, text = "Закрыть", command = close_window)
+        button.pack()
+        
 
 class Statement_Data():
     '''
