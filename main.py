@@ -51,6 +51,16 @@ class App(tk.Tk):
         self.update_window(data)
         
     def update_window(self, data):
+        
+        #  Данный участок кода будет работать при повторном обновлении данных
+        if self.fig_1 is not None:
+			#  Очистка всех графических элементов от старых значений
+            self.fig_1.clf()
+            self.fig_2.clf()
+            sd_listbox = self.sd_listbox
+            sd_listbox.delete(0,tk.END)
+            #self.tree.delete(*tree.get_children())
+        
         self.title('Radar')
         ########################
         #  Круговая диаграмма  #
@@ -136,6 +146,7 @@ class App(tk.Tk):
         # Таблица #
         ###########
         tree = ttk.Treeview(self, column=("Номер обращения", "Исполнитель", "Инициатор", "Email"), show='headings', height=10)
+        tree.delete(*tree.get_children())
         tree.column("# 1")
         tree.heading("# 1", text="Номер обращения")
         tree.column("# 2")
@@ -157,79 +168,34 @@ class App(tk.Tk):
         #  Запоминаем дату изменения файла
         data.last_modified_time = time.ctime(os.path.getmtime(data.file_with_data))
         
-        self.refresh(canvas_pie, bar_canvas, tree, data)
+        self.refresh(data)
         
         
-    def refresh(self, inedible_pie, bar, tree, data):
+    def refresh(self, data):
         """
         Метод обновления приложения
         """
         
         try:
+			#  Запоминаем время редактирования файла с данными
             modified_time = time.ctime(os.path.getmtime(data.file_with_data))
             
+            #  Если она изменилась, то обновлением данные
             if data.last_modified_time != modified_time:
                 
-                print("Обновляю данные")
-                data.last_modified_time = modified_time
+                print("Обновляю данные.")
                 data.get_summary_info()
-                
-                self.fig_1.clf()
-                self.fig_1.canvas.draw()
-                ax_2 = self.ax_2
-                
-                self.ax_1 = self.fig_1.add_subplot(111)
-                self.patches_pie, texts, autotexts = self.ax_1.pie(data.summary_requester["Количество"], startangle=90, autopct='%1.1f%%')
-                self.ax_1.set_title("Тональность заявителя")
-                
-                for p in self.patches_pie:
-                    p.set_gid(p.get_facecolor())
-                    # Активируем выделение
-                    p.set_picker(True)
-                
-                self.canvas_pie = FigureCanvasTkAgg(self.fig_1, self)
-                self.canvas_pie.get_tk_widget().place(x=20, y=10)
-                
-                #fig_1.canvas.mpl_connect('pick_event', self.onclick)
-                self.fig_1.canvas.draw()
-                
-                fig_2 = self.fig_2
-                #ax_2 = fig_2.add_subplot()
-                bar_canvas = FigureCanvasTkAgg(fig_2, self)
-                #bar.get_tk_widget().grid(row=1, column=1, padx=5, pady=5)
-                data.summary_performer.plot(kind='bar', ax=ax_2, subplots=False, rot=0, color=['#5cb85c', '#d9534f'], width=0.08)
-                #ax_2.legend(fancybox=True, framealpha=0.4, shadow=True, borderpad=1)
-                
-                #  Очистка списка с обращениями с невежливой тональностью
-                sd_listbox = self.sd_listbox
-                sd_listbox.delete(0,tk.END)
-                
-                for application_number in data.bad_app_list:
-                    sd_listbox.insert(tk.END, application_number)
-                
-                self.sd_listbox = sd_listbox
-                
-                #  Очистка таблицы
-                self.tree.delete(*tree.get_children())
-                tree = self.tree
-                
-                all_bad_app = data.info_bad_app
-        
-                for row in all_bad_app:
-                    tree.insert('', 'end', text="1", values=(row[0], row[1], row[2], row[3]))
-                    
-                self.tree = tree
-                
-                print("Построил новую диаграмму.")
+                data.last_modified_time = modified_time
+                self.update_window(data)
+                print("Построил новые диаграммы.")
             else:
                 print("Файл не изменён. Перерасчёт не требуется.")
             
         except FileExistsError:
-            print("Файл используется")
+            print("Файл используется.")
         
         self.update()
-        self.after(5000, self.refresh, inedible_pie, bar, tree, data)
-        
+        self.after(5000, self.refresh, data)
         
     def onclick(self, event):
         #  Действия при нажатии мышкой на фрагмент диаграммы
@@ -243,8 +209,16 @@ class App(tk.Tk):
         self.show_table()
         
     def show_table(self):
-        def close_window (): 
+        """
+        Метод для вывода окна с табличной информацией 
+        """
+        
+        def close_window ():
+			"""
+			Метод закрытия окна с таблицей
+			"""
             window.destroy()
+            
         window = tk.Toplevel(self)
         frame = tk.Frame(window)
         frame.pack()
