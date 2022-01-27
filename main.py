@@ -16,6 +16,9 @@ file_with_data = "excel_file_temp.xlsx"
 #  Файл с информацией по обращениям 
 #  (номер обращения, исполнитель, инициатор, email)
 all_application_file = "all_application.xlsx"
+
+#  Цвет выделенного мышью фрагмента диаграммы
+click_color = "#F71735"
     
     
 class App(tk.Tk):
@@ -23,15 +26,33 @@ class App(tk.Tk):
     Класс графического приложения
     """
     
+    #  Элементы графического окна приложения
+    
+    #  Круговая диаграмма
+    fig_1 = None
+    ax_1 = None
+    patches_pie = None
+    canvas_pie = None
+    
+    #  Столбчатая диаграмма
+    fig_2 = None
+    ax_2 = None
+    patches_bar = None
+    
+    # Список обращений с неудовлетворённой тональностью
+    sd_listbox = None
+    bad_app_frame = None
+    
+    #  Таблица с данными об обращениях
+    tree = None
+    
     def __init__(self, data):
         super().__init__()
         
         self.title('Radar')
-        
-        
-        """
-        Круговая диаграмма
-        """
+        ########################
+        #  Круговая диаграмма  #
+        ########################
         
         #  Создание объекта типа figure
         #  figure - контейнер самого верхнего уровня 
@@ -47,19 +68,29 @@ class App(tk.Tk):
         
         #  Размещение элемента в графическом окне через метод place()
         #  place() - абсолютное позиционирование
-        canvas_pie.get_tk_widget().place(x=20, y=20)
+        canvas_pie.get_tk_widget().place(x=20, y=10)
         
         #  Создаём круговую диаграмму в области axes
-        ax_1.pie(data.summary_requester["Количество"], startangle=90, 
+        #  patches - хранит клиновидные фрагменты диаграммы
+        patches, texts, autotexts = ax_1.pie(data.summary_requester["Количество"], startangle=90, 
             autopct='%1.1f%%')
         ax_1.set_title("Тональность заявителя")
         
-        #canvas_pie.mpl_connect('button_press_event', self.onclick)
+        for p in patches:
+            p.set_gid(p.get_facecolor())
+            # Активируем выделение
+            p.set_picker(True)
         
+        self.patches_pie = patches
         
-        """
-          Столбчатая диаграмма
-        """
+        fig_1.canvas.mpl_connect('pick_event', self.onclick)
+        
+        self.ax_1 = ax_1
+        self.fig_1 = fig_1
+        
+        #########################
+        #  Столбчатая диаграмма #
+        #########################
         
         #  Cоздание фигуры
         fig_2 = plt.Figure(figsize=(3, 3.3))
@@ -71,29 +102,37 @@ class App(tk.Tk):
         bar_canvas = FigureCanvasTkAgg(fig_2, self)
         
         #  Задаём позицию элемента
-        bar_canvas.get_tk_widget().place(x=350, y=0)
-         
+        bar_canvas.get_tk_widget().place(x=350, y=10)
+        
+        #  Построение столбчатой диаграммы
         data.summary_performer.plot(kind='bar', ax=ax_2, subplots=False, rot=0, color=['#5cb85c', '#d9534f'], width=0.08)
         ax_2.set_title("Тональность исполнителя")
         #ax_2.legend(fancybox=True, framealpha=0.4, shadow=True, borderpad=1)
         
-        """
-        Список обращений с неудовлетворительной тональностью
-        """
+        self.fig_2 = fig_2
+        self.ax_2 = ax_2
+        
+        #########################################################
+        #  Список обращений с неудовлетворительной тональностью #
+        #########################################################
+        
         #  Элемент ListBox
         bad_app_frame = tk.LabelFrame(self, text='Неудовл. исполнителя')
-        bad_app_frame.place(x=800, y=20)
+        bad_app_frame.place(x=800, y=10)
         sd_listbox = tk.Listbox(bad_app_frame, height=10)
-        sd_listbox.grid(row=1, column=2)
+        sd_listbox.grid(row=1, column=1)
         
         #  Вставка номеров обращений с неудовл. тональностью
         #  в список в окне приложения
         for application_number in data.bad_app_list:
             sd_listbox.insert(tk.END, application_number)
-
-        data.last_modified_time = time.ctime(os.path.getmtime(data.file_with_data))
         
-        # Таблица
+        self.bad_app_frame = bad_app_frame
+        self.sd_listbox = sd_listbox
+        
+        ###########
+        # Таблица #
+        ###########
         tree = ttk.Treeview(self, column=("Номер обращения", "Исполнитель", "Инициатор", "Email"), show='headings', height=10)
         tree.column("# 1")
         tree.heading("# 1", text="Номер обращения")
@@ -105,23 +144,24 @@ class App(tk.Tk):
         tree.heading("# 4", text="Email")
 
         # Вставка данных в таблицу
-        
-        # tree.insert('', 'end', text="1", values=('SD12345', 'Иванов И.И.', 'Кузнецов К.К.', 'kuznecovkk@omega.sbrf.ru'))
-        
         all_bad_app = data.info_bad_app
         
         for row in all_bad_app:
             tree.insert('', 'end', text="1", values=(row[0], row[1], row[2], row[3]))
 
         tree.place(x=20, y=400)
+        self.tree = tree
         
-        self.refresh(fig_1, fig_2, ax_1, ax_2, canvas_pie, bar_canvas, sd_listbox, tree, data)
+        #  Запоминаем дату изменения файла
+        data.last_modified_time = time.ctime(os.path.getmtime(data.file_with_data))
+        
+        self.refresh(canvas_pie, bar_canvas, tree, data)
         
         
-    def refresh(self, figure1, figure2, ax1, ax2, inedible_pie, bar, sd_listbox, tree, data):
-        '''
-        Функция обновления приложения
-        '''
+    def refresh(self, inedible_pie, bar, tree, data):
+        """
+        Метод обновления приложения
+        """
         
         try:
             modified_time = time.ctime(os.path.getmtime(data.file_with_data))
@@ -132,39 +172,51 @@ class App(tk.Tk):
                 data.last_modified_time = modified_time
                 data.get_summary_info()
                 
-                figure1.clear()
-                figure2.clear()
-                ax1.clear()
-                ax2.clear()
+                self.fig_1.clf()
+                self.fig_1.canvas.draw()
+                ax_2 = self.ax_2
                 
-                figure1 = plt.Figure(figsize=(6, 3), dpi=100)
-                ax1 = figure1.add_subplot()
-                inedible_pie = FigureCanvasTkAgg(figure1, self)
-                inedible_pie.get_tk_widget().grid(row=1, column=0, padx=5, pady=5)
-                data.summary_requester.plot(kind='pie', legend=False, ax=ax1, subplots=True, startangle=90, autopct='%1.1f%%')
-                ax1.set_title("Тональность заявителя")
+                self.ax_1 = self.fig_1.add_subplot(111)
+                self.patches_pie, texts, autotexts = self.ax_1.pie(data.summary_requester["Количество"], startangle=90, autopct='%1.1f%%')
+                self.ax_1.set_title("Тональность заявителя")
                 
-                figure2 = plt.Figure(figsize=(5, 3))
-                ax2 = figure2.add_subplot()
-                bar = FigureCanvasTkAgg(figure2, self)
-                bar.get_tk_widget().grid(row=1, column=1, padx=5, pady=5)
-                data.summary_performer.plot(kind='bar', ax=ax2, subplots=False, rot=0, color=['#5cb85c', '#d9534f'], width=0.08)
-                ax2.set_title("Тональность исполнителя")
-                ax2.legend(fancybox=True, framealpha=0.4, shadow=True, borderpad=1)
+                for p in self.patches_pie:
+                    p.set_gid(p.get_facecolor())
+                    # Активируем выделение
+                    p.set_picker(True)
+                
+                self.canvas_pie = FigureCanvasTkAgg(self.fig_1, self)
+                self.canvas_pie.get_tk_widget().place(x=20, y=10)
+                
+                #fig_1.canvas.mpl_connect('pick_event', self.onclick)
+                self.fig_1.canvas.draw()
+                
+                fig_2 = self.fig_2
+                #ax_2 = fig_2.add_subplot()
+                bar_canvas = FigureCanvasTkAgg(fig_2, self)
+                #bar.get_tk_widget().grid(row=1, column=1, padx=5, pady=5)
+                data.summary_performer.plot(kind='bar', ax=ax_2, subplots=False, rot=0, color=['#5cb85c', '#d9534f'], width=0.08)
+                #ax_2.legend(fancybox=True, framealpha=0.4, shadow=True, borderpad=1)
                 
                 #  Очистка списка с обращениями с невежливой тональностью
+                sd_listbox = self.sd_listbox
                 sd_listbox.delete(0,tk.END)
                 
+                for application_number in data.bad_app_list:
+                    sd_listbox.insert(tk.END, application_number)
+                
+                self.sd_listbox = sd_listbox
+                
                 #  Очистка таблицы
-                tree.delete(*tree.get_children())
+                self.tree.delete(*tree.get_children())
+                tree = self.tree
                 
                 all_bad_app = data.info_bad_app
         
                 for row in all_bad_app:
                     tree.insert('', 'end', text="1", values=(row[0], row[1], row[2], row[3]))
-                
-                for application_number in data.bad_app_list:
-                    sd_listbox.insert(tk.END, application_number)
+                    
+                self.tree = tree
                 
                 print("Построил новую диаграмму.")
             else:
@@ -174,13 +226,18 @@ class App(tk.Tk):
             print("Файл используется")
         
         self.update()
-        self.after(5000, self.refresh, figure1, figure2, ax1, ax2, inedible_pie, bar, sd_listbox, tree, data)
+        self.after(5000, self.refresh, inedible_pie, bar, tree, data)
         
-    def onclick(event, x):
+        
+    def onclick(self, event):
+        #  Действия при нажатии мышкой на фрагмент диаграммы
+        for p in self.patches_pie:
+            p.set_facecolor(p.get_gid())
         a = event.artist
-        print('on pick:', a, a.get_gid())
+        # print('on pick:', a, a.get_gid())
         a.set_facecolor(click_color)
-        plt.draw()
+        print("Сработало событие выделения фрагмента пирога")
+        self.fig_1.canvas.draw()
 
 
 class Statement_Data():
@@ -332,5 +389,3 @@ if __name__ == "__main__":
     app.configure(background='white')
     app.mainloop()
     print("Завершение работы")
-
-
