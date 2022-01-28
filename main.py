@@ -1,11 +1,12 @@
-import tkinter as tk
-from tkinter import ttk
+from tkinter import *
 import pandas as pd
 import time
 import os.path
 import matplotlib.pyplot as plt
 from openpyxl import load_workbook
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from matplotlib.lines import Line2D
+import numpy as np
 
 """
 Заранее определим некоторые переменные
@@ -18,10 +19,20 @@ file_with_data = "excel_file_temp.xlsx"
 all_application_file = "all_application.xlsx"
 
 #  Цвет выделенного мышью фрагмента диаграммы
-click_color = "#F71735"
+click_color = "#00a4ef"
+
+#  Цвета фрагментов круговой диаграммы. Порядок цветов важен.
+#  1 - Без комментариев
+#  2 - Нейтральное отношение
+#  3 - Неудовлетворительное
+#  4 - Полная удовлетворённость
+pie_colors = ["#737373", "#FFB900", "#F25022", "#7FBA00"]
     
-    
-class App(tk.Tk):
+#  Путь к фоновому изображению
+background_image = "images\\background_image_radar.png"
+
+
+class App(Tk):
     """
     Класс графического приложения
     """
@@ -46,11 +57,18 @@ class App(tk.Tk):
     #  Таблица с данными об обращениях
     tree = None
     
+    # Фоновое изображение
+    bg_label = None
+    bg_image = None
+    
     def __init__(self, data):
         super().__init__()
         self.update_window(data)
         
     def update_window(self, data):
+        """
+        Метод обновления основного окна приложения
+        """
         
         #  Данный участок кода будет работать при повторном обновлении данных
         if self.fig_1 is not None:
@@ -58,10 +76,21 @@ class App(tk.Tk):
             self.fig_1.clf()
             self.fig_2.clf()
             sd_listbox = self.sd_listbox
-            sd_listbox.delete(0,tk.END)
+            sd_listbox.delete(0, END)
             #self.tree.delete(*tree.get_children())
         
+        bg_image = self.bg_image
+        bg_image = PhotoImage(file=background_image)
+        
+        bg_label = self.bg_label
+        bg_label = Label(self, image=bg_image)
+        bg_label.place(x=0, y=0)
+        
+        self.bg_image = bg_image
+        self.bg_label = bg_label
+        
         self.title('Radar')
+        
         ########################
         #  Круговая диаграмма  #
         ########################
@@ -85,7 +114,7 @@ class App(tk.Tk):
         #  Создаём круговую диаграмму в области axes
         #  patches - хранит клиновидные фрагменты диаграммы
         patches, texts, autotexts = ax_1.pie(data.summary_requester["Количество"], startangle=90, 
-            autopct='%1.1f%%')
+            autopct='%1.1f%%', colors=pie_colors)
         ax_1.set_title("Тональность заявителя")
         
         for p in patches:
@@ -124,6 +153,7 @@ class App(tk.Tk):
         self.fig_2 = fig_2
         self.ax_2 = ax_2
         
+        """
         #########################################################
         #  Список обращений с неудовлетворительной тональностью #
         #########################################################
@@ -141,6 +171,7 @@ class App(tk.Tk):
         
         self.bad_app_frame = bad_app_frame
         self.sd_listbox = sd_listbox
+        """
         
         #  Запоминаем дату изменения файла
         data.last_modified_time = time.ctime(os.path.getmtime(data.file_with_data))
@@ -149,6 +180,7 @@ class App(tk.Tk):
         
         
     def refresh(self, data):
+        
         """
         Метод обновления приложения
         """
@@ -181,11 +213,14 @@ class App(tk.Tk):
         for p in self.patches_pie:
             p.set_facecolor(p.get_gid())
         a = event.artist
+        # previous_color = a.get_facecolor()
+        # a.set_facecolor(click_color)
+        # self.fig_1.canvas.draw()
         # print('on pick:', a, a.get_gid())
-        a.set_facecolor(click_color)
+        
         print("Сработало событие выделения фрагмента пирога")
-        self.fig_1.canvas.draw()
         self.show_table()
+        
         
     def show_table(self):
         """
@@ -198,10 +233,10 @@ class App(tk.Tk):
             """
             window.destroy()
             
-        window = tk.Toplevel(self)
-        frame = tk.Frame(window)
+        window = Toplevel(self)
+        frame = Frame(window)
         
-        tree = ttk.Treeview(window, column=("Номер обращения", "Исполнитель", "Инициатор", "Email"), show='headings', height=10)
+        tree = Treeview(window, column=("Номер обращения", "Исполнитель", "Инициатор", "Email"), show='headings', height=10)
         tree.delete(*tree.get_children())
         tree.column("# 1")
         tree.heading("# 1", text="Номер обращения")
@@ -219,7 +254,7 @@ class App(tk.Tk):
             # ~ tree.insert('', 'end', text="1", values=(row[0], row[1], row[2], row[3]))
         
         #  Добавление кнопки выхода
-        button = tk.Button(frame, text = "Закрыть", command = close_window)
+        button = Button(frame, text = "Закрыть", command = close_window)
         
         tree.pack()
         frame.pack()
@@ -371,7 +406,8 @@ if __name__ == "__main__":
     app = App(my_data)
     
     #  Задаём размер окна. Сначала ширина, затем высота.
-    app.geometry("1000x600")
+    app.geometry("1280x720")
+    app.maxsize(1280, 720)
     app.configure(background='white')
     app.mainloop()
     print("Завершение работы")
