@@ -1,12 +1,11 @@
 from tkinter import *
+from tkinter.ttk import Treeview
 import pandas as pd
 import time
 import os.path
 import matplotlib.pyplot as plt
 from openpyxl import load_workbook
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-from matplotlib.lines import Line2D
-import numpy as np
 
 """
 Заранее определим некоторые переменные
@@ -79,15 +78,20 @@ class App(Tk):
             sd_listbox.delete(0, END)
             #self.tree.delete(*tree.get_children())
         
+        #  Настройка фонового изображения главного окна
         bg_image = self.bg_image
-        bg_image = PhotoImage(file=background_image)
         
-        bg_label = self.bg_label
-        bg_label = Label(self, image=bg_image)
-        bg_label.place(x=0, y=0)
+        try:
+            bg_image = PhotoImage(file=background_image)
+            
+            bg_label = self.bg_label
+            bg_label = Label(self, image=bg_image)
+            bg_label.place(x=0, y=0)
+            self.bg_label = bg_label
+        except TclError:
+            print("Не могу найти изображение для фона")
         
         self.bg_image = bg_image
-        self.bg_label = bg_label
         
         self.title('Radar')
         
@@ -95,9 +99,15 @@ class App(Tk):
         #  Круговая диаграмма  #
         ########################
         
+        plt.rcParams.update({
+            "figure.facecolor":  (0.0, 0.0, 0.0, 1.0),  # red   with alpha = 30%
+            "axes.facecolor":    (0.0, 0.0, 0.0, 1.0),  # green with alpha = 50%
+            "savefig.facecolor": (0.0, 0.0, 0.0, 1.0),  # blue  with alpha = 20%
+        })
+        
         #  Создание объекта типа figure
         #  figure - контейнер самого верхнего уровня 
-        fig_1 = plt.Figure(figsize=(3, 3))
+        fig_1 = plt.Figure(figsize=(5, 5))
         
         #  Создание сетки для построения диаграммы 1х1 для 1 графика.
         #  axes - область, где отображается диаграмма
@@ -109,7 +119,7 @@ class App(Tk):
         
         #  Размещение элемента в графическом окне через метод place()
         #  place() - абсолютное позиционирование
-        canvas_pie.get_tk_widget().place(x=20, y=10)
+        canvas_pie.get_tk_widget().place(x=30, y=50)
         
         #  Создаём круговую диаграмму в области axes
         #  patches - хранит клиновидные фрагменты диаграммы
@@ -134,7 +144,7 @@ class App(Tk):
         #########################
         
         #  Cоздание фигуры
-        fig_2 = plt.Figure(figsize=(3, 3.3))
+        fig_2 = plt.Figure(figsize=(5, 5.5))
         
         #  Создание Axes
         ax_2 = fig_2.add_subplot(111)
@@ -143,7 +153,7 @@ class App(Tk):
         bar_canvas = FigureCanvasTkAgg(fig_2, self)
         
         #  Задаём позицию элемента
-        bar_canvas.get_tk_widget().place(x=350, y=10)
+        bar_canvas.get_tk_widget().place(x=460, y=50)
         
         #  Построение столбчатой диаграммы
         data.summary_performer.plot(kind='bar', ax=ax_2, subplots=False, rot=0, color=['#5cb85c', '#d9534f'], width=0.08)
