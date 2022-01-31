@@ -5,6 +5,7 @@ import time
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
+
 class App(Tk):
     """
     Класс графического приложения
@@ -35,9 +36,13 @@ class App(Tk):
     bg_label = None
     bg_image = None
 
+    # Общий набор данных
+    data = None
+
     def __init__(self, data, bg_image):
         super().__init__()
         self.bg_image = bg_image
+        self.data = data
         self.update_window(data)
 
     def update_window(self, data):
@@ -227,11 +232,11 @@ class App(Tk):
         tree.column("# 4")
         tree.heading("# 4", text="Email")
 
-        # ~ # Вставка данных в таблицу
-        # ~ all_bad_app = data.info_bad_app
+        # Вставка данных в таблицу
+        all_bad_app = self.data.info_bad_app
 
-        # ~ for row in all_bad_app:
-        # ~ tree.insert('', 'end', text="1", values=(row[0], row[1], row[2], row[3]))
+        for row in all_bad_app:
+            tree.insert('', 'end', text="1", values=(row[0], row[1], row[2], row[3]))
 
         #  Добавление кнопки выхода
         button = Button(frame, text="Закрыть", command=close_window)

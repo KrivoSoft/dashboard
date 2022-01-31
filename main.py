@@ -28,10 +28,11 @@ background_image = "images\\background_image_radar.png"
 if __name__ == "__main__":
     print("Подключил необходимые библиотеки")
 
+    # Создаём набор данных
     my_data = StatementData(file_with_data, all_application_file)
 
+    # Создаём экземпляр самого приложения
     app = App(my_data, background_image)
-
     #  Задаём размер окна. Сначала ширина, затем высота.
     app.geometry("1280x720")
     app.maxsize(1280, 720)
