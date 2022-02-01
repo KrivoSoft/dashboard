@@ -4,7 +4,7 @@ import os.path
 import time
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-
+import numpy as np
 
 class App(Tk):
     """
@@ -24,10 +24,6 @@ class App(Tk):
     fig_2 = None
     ax_2 = None
     patches_bar = None
-
-    # Список обращений с неудовлетворённой тональностью
-    sd_listbox = None
-    bad_app_frame = None
 
     #  Таблица с данными об обращениях
     tree = None
@@ -55,9 +51,6 @@ class App(Tk):
             #  Очистка всех графических элементов от старых значений
             self.fig_1.clf()
             self.fig_2.clf()
-            sd_listbox = self.sd_listbox
-            sd_listbox.delete(0, END)
-            # self.tree.delete(*tree.get_children())
 
         #  Настройка фонового изображения главного окна
         bg_image = self.bg_image
@@ -82,7 +75,7 @@ class App(Tk):
 
         #  Создание объекта типа figure
         #  figure - контейнер самого верхнего уровня
-        fig_1 = plt.Figure(figsize=(5, 5))
+        fig_1 = plt.Figure(figsize=(6, 4))
 
         #  Создание сетки для построения диаграммы 1х1 для 1 графика.
         #  axes - область, где отображается диаграмма
@@ -94,13 +87,29 @@ class App(Tk):
 
         #  Размещение элемента в графическом окне через метод place()
         #  place() - абсолютное позиционирование
-        canvas_pie.get_tk_widget().place(x=30, y=50)
+        canvas_pie.get_tk_widget().place(x=30, y=150)
 
-        #  Создаём круговую диаграмму в области axes
+        #  Создаём круговую диаграмму по тональности заявителя в области axes
         #  patches - хранит клиновидные фрагменты диаграммы
         patches, texts, autotexts = ax_1.pie(data.summary_requester["Количество"], startangle=90,
-                                             autopct='%1.1f%%', colors=self.pie_colors)
-        ax_1.set_title("Тональность заявителя")
+                                             autopct='%1.1f%%', colors=self.pie_colors, wedgeprops=dict(width=0.5))
+
+        recipe = ["Без коммент.", "Нейтральное",
+                  "Неудовл.", "Полная удовл."]
+
+        bbox_props = dict(boxstyle="square,pad=0.3", fc="w", ec="k", lw=0.72)
+        kw = dict(arrowprops=dict(arrowstyle="-"),
+                  bbox=bbox_props, zorder=0, va="center")
+
+        for i, p in enumerate(patches):
+            ang = (p.theta2 - p.theta1) / 2. + p.theta1
+            y = np.sin(np.deg2rad(ang))
+            x = np.cos(np.deg2rad(ang))
+            horizontalalignment = {-1: "right", 1: "left"}[int(np.sign(x))]
+            connectionstyle = "angle,angleA=0,angleB={}".format(ang)
+            kw["arrowprops"].update({"connectionstyle": connectionstyle})
+            ax_1.annotate(recipe[i], xy=(x, y), xytext=(1.35 * np.sign(x), 1.4 * y),
+                          horizontalalignment=horizontalalignment, **kw)
 
         for p in patches:
             p.set_gid(p.get_facecolor())
@@ -119,7 +128,7 @@ class App(Tk):
         #########################
 
         #  Cоздание фигуры
-        fig_2 = plt.Figure(figsize=(5, 5.5))
+        fig_2 = plt.Figure(figsize=(4, 4))
 
         #  Создание Axes
         ax_2 = fig_2.add_subplot(111)
@@ -128,36 +137,18 @@ class App(Tk):
         bar_canvas = FigureCanvasTkAgg(fig_2, self)
 
         #  Задаём позицию элемента
-        bar_canvas.get_tk_widget().place(x=460, y=50)
+        bar_canvas.get_tk_widget().place(x=750, y=150)
 
-        #  Построение столбчатой диаграммы
-        data.summary_performer.plot(kind='bar', ax=ax_2, subplots=False, rot=0, color=['#5cb85c', '#d9534f'],
-                                    width=0.08)
-        ax_2.set_title("Тональность исполнителя")
+        #  Построение столбчатой диаграммы по тональности исполнителя
+        data.summary_performer.plot(kind='bar', ax=ax_2, subplots=False, rot=0, color=["#7FBA00", "#F25022"],
+                                    width=0.1)
         # ax_2.legend(fancybox=True, framealpha=0.4, shadow=True, borderpad=1)
+        ax_2.set_xticklabels([])
 
         self.fig_2 = fig_2
         self.ax_2 = ax_2
 
-        """
-        #########################################################
-        #  Список обращений с неудовлетворительной тональностью #
-        #########################################################
-
-        #  Элемент ListBox
-        bad_app_frame = tk.LabelFrame(self, text='Неудовл. исполнителя')
-        bad_app_frame.place(x=800, y=10)
-        sd_listbox = tk.Listbox(bad_app_frame, height=10)
-        sd_listbox.grid(row=1, column=1)
-
-        #  Вставка номеров обращений с неудовл. тональностью
-        #  в список в окне приложения
-        for application_number in data.bad_app_list:
-            sd_listbox.insert(tk.END, application_number)
-
-        self.bad_app_frame = bad_app_frame
-        self.sd_listbox = sd_listbox
-        """
+        fig_2.canvas.mpl_connect('button_press_event', self.onclick)
 
         #  Запоминаем дату изменения файла
         data.last_modified_time = time.ctime(os.path.getmtime(data.file_with_data))
@@ -197,7 +188,7 @@ class App(Tk):
         """
         for p in self.patches_pie:
             p.set_facecolor(p.get_gid())
-        a = event.artist
+        # a = event.artist
         # previous_color = a.get_facecolor()
         # a.set_facecolor(click_color)
         # self.fig_1.canvas.draw()

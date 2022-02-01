@@ -5,11 +5,11 @@ from StatementData import StatementData
 Заранее определим некоторые переменные
 """
 #  Файл с данными по тональности
-file_with_data = "excel_file_temp.xlsx"
+file_with_data = "data/excel_file_temp.xlsx"
 
 #  Файл с информацией по обращениям 
 #  (номер обращения, исполнитель, инициатор, email)
-all_application_file = "all_application.xlsx"
+all_application_file = "data/all_application.xlsx"
 
 #  Цвет выделенного мышью фрагмента диаграммы
 click_color = "#00a4ef"
