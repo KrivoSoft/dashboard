@@ -55,7 +55,7 @@ class StatementData:
         self.summary_performer = pd.pivot_table(self.dataframe,
                                                 columns="Тональность исполнителя",
                                                 values="Количество",
-                                                aggfunc="sum")
+                                                aggfunc="sum").rename_axis(None, axis=1).reset_index()
 
         self.summary_requester = pd.pivot_table(self.dataframe,
                                                 index="Тональность заявителя",

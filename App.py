@@ -91,11 +91,15 @@ class App(Tk):
 
         #  Создаём круговую диаграмму по тональности заявителя в области axes
         #  patches - хранит клиновидные фрагменты диаграммы
-        patches, texts, autotexts = ax_1.pie(data.summary_requester["Количество"], startangle=90,
-                                             autopct='%1.1f%%', colors=self.pie_colors, wedgeprops=dict(width=0.5))
+        patches, texts, autotexts = ax_1.pie(data.summary_requester["Количество"],
+                                             startangle=90,
+                                             autopct='%1.1f%%',
+                                             colors=self.pie_colors,
+                                             wedgeprops=dict(width=0.5),
+                                             pctdistance=0.8,
+                                             labeldistance=0.8)
 
-        recipe = ["Без коммент.", "Нейтральное",
-                  "Неудовл.", "Полная удовл."]
+        pie_labels = ["Без коммент.", "Нейтральное", "Неудовл.", "Полная удовл."]
 
         bbox_props = dict(boxstyle="square,pad=0.3", fc="w", ec="k", lw=0.72)
         kw = dict(arrowprops=dict(arrowstyle="-"),
@@ -108,7 +112,7 @@ class App(Tk):
             horizontalalignment = {-1: "right", 1: "left"}[int(np.sign(x))]
             connectionstyle = "angle,angleA=0,angleB={}".format(ang)
             kw["arrowprops"].update({"connectionstyle": connectionstyle})
-            ax_1.annotate(recipe[i], xy=(x, y), xytext=(1.35 * np.sign(x), 1.4 * y),
+            ax_1.annotate(pie_labels[i], xy=(x, y), xytext=(1.35 * np.sign(x), 1.4 * y),
                           horizontalalignment=horizontalalignment, **kw)
 
         for p in patches:
@@ -140,15 +144,30 @@ class App(Tk):
         bar_canvas.get_tk_widget().place(x=750, y=150)
 
         #  Построение столбчатой диаграммы по тональности исполнителя
-        data.summary_performer.plot(kind='bar', ax=ax_2, subplots=False, rot=0, color=["#7FBA00", "#F25022"],
-                                    width=0.1)
+        my_bar = data.summary_performer.plot(kind='bar', ax=ax_2, subplots=False,
+                                             color=["#7FBA00", "#F25022"], width=0.25, legend=False)
+
+        for i in range(len(my_bar.containers)):
+            my_bar.bar_label(my_bar.containers[i], label_type='edge')
+
         # ax_2.legend(fancybox=True, framealpha=0.4, shadow=True, borderpad=1)
-        ax_2.set_xticklabels([])
+        box = ax_2.get_position()
+        ax_2.set_position([box.x0, box.y0 + box.height * 0.1,
+                         box.width, box.height * 0.9])
+
+        # Put a legend below current axis
+        ax_2.legend(loc='upper center', bbox_to_anchor=(0.5, -0.05),
+                  fancybox=True, shadow=True, ncol=1, frameon=False)
+        ax_2.axis('off')
 
         self.fig_2 = fig_2
         self.ax_2 = ax_2
 
         fig_2.canvas.mpl_connect('button_press_event', self.onclick)
+
+        #  Заголовки диаграмм
+        Label(self, text="Тональность заявителя", bg="white", font=(None, 16)).place(x=250, y=120)
+        Label(self, text="Тональность исполнителя", bg="white", font=(None, 16)).place(x=850, y=120)
 
         #  Запоминаем дату изменения файла
         data.last_modified_time = time.ctime(os.path.getmtime(data.file_with_data))
