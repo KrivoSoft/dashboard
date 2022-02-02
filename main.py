@@ -9,7 +9,7 @@ file_with_data = "data/excel_file_temp.xlsx"
 
 #  Файл с информацией по обращениям 
 #  (номер обращения, исполнитель, инициатор, email)
-all_application_file = "data/all_application.xlsx"
+all_application_file = "data/all_apps_temp.xlsx"
 
 #  Цвет выделенного мышью фрагмента диаграммы
 click_color = "#00a4ef"

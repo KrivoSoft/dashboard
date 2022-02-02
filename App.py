@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import numpy as np
 
+
 class App(Tk):
     """
     Класс графического приложения
@@ -144,8 +145,12 @@ class App(Tk):
         bar_canvas.get_tk_widget().place(x=750, y=150)
 
         #  Построение столбчатой диаграммы по тональности исполнителя
-        my_bar = data.summary_performer.plot(kind='bar', ax=ax_2, subplots=False,
-                                             color=["#7FBA00", "#F25022"], width=0.25, legend=False)
+        my_bar = data.summary_performer.plot(kind='bar',
+                                             ax=ax_2,
+                                             subplots=False,
+                                             color=["#7FBA00", "#F25022"],
+                                             width=0.25,
+                                             legend=False)
 
         for i in range(len(my_bar.containers)):
             my_bar.bar_label(my_bar.containers[i], label_type='edge')
@@ -153,11 +158,14 @@ class App(Tk):
         # ax_2.legend(fancybox=True, framealpha=0.4, shadow=True, borderpad=1)
         box = ax_2.get_position()
         ax_2.set_position([box.x0, box.y0 + box.height * 0.1,
-                         box.width, box.height * 0.9])
+                           box.width, box.height * 0.9])
 
         # Put a legend below current axis
         ax_2.legend(loc='upper center', bbox_to_anchor=(0.5, -0.05),
-                  fancybox=True, shadow=True, ncol=1, frameon=False)
+                    fancybox=True,
+                    shadow=True,
+                    ncol=1,
+                    frameon=False)
         ax_2.axis('off')
 
         self.fig_2 = fig_2

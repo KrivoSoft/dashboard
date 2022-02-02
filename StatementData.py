@@ -1,6 +1,6 @@
 from openpyxl import load_workbook
 import pandas as pd
-import time
+
 
 class StatementData:
     """
@@ -71,7 +71,6 @@ class StatementData:
         """
 
         #  Установим счётчик времени
-        start_time = time.time()
         wb = load_workbook(filename=name_of_file, read_only=True)
         ws = wb.active
 
@@ -82,8 +81,6 @@ class StatementData:
         wb.close()
 
         print("Загружены даные из файла ", name_of_file)
-        print("Время выполнения: ", time.time() - start_time)
-
         return data
 
     def clear_data(self, data):
@@ -120,15 +117,27 @@ class StatementData:
         return labels, quantity
 
     def get_all_bad_app(self, data, list_with_app):
+        """
+        Функция для получения всех данных по плохим обращениям.
+        """
 
         all_app = []
+        print("Все плохие обращения: ")
+        print(list_with_app)
+
+        #  Удаляем все лишние колонки датафрейма, кроме нужных
+        data = data[['ID Обращения', 'Исполнитель', 'ВК', 'e-mail']]
 
         for one_app in list_with_app:
             try:
-                row = data.loc[data['Номер обращения'] == one_app].values.flatten().tolist()
+                row = data.loc[data['ID Обращения'] == one_app].values.flatten().tolist()
                 if row:
                     all_app.append(row)
             except KeyError:
                 print("Не могу найти такой номер обращения: " + one_app)
+
+        print()
+        print("Плохие обращения с доп.информацией: ")
+        print(all_app)
 
         return all_app
